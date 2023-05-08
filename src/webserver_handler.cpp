@@ -50,6 +50,17 @@ void webServerInit(WebServer* server) {
 		}
 	});
 
+	server->on("/scan", HTTP_GET, [server]() {
+		char availableNetworks[2028] = {'\0'};
+		int networkCount = wifiScan(availableNetworks);
+
+		if (networkCount > 0) {
+			server->send(200, "text/plain", availableNetworks);
+		} else {
+			server->send(200, "text/plain", "No Network!");
+		}
+	});
+
 	server->onNotFound([server]() {
 		String message = "File Not Found\n\n";
 		message += "URI: ";

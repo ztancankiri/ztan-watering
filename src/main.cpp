@@ -5,9 +5,7 @@
 #include "webserver_handler.h"
 
 TaskHandle_t extraLoopHandle;
-
 WebServer server(80);
-char configBuffer[128], ssid[128], password[128] = {'\0'};
 
 void extraLoop(void* parameter) {
 	while (true) {
@@ -18,6 +16,8 @@ void extraLoop(void* parameter) {
 void setup() {
 	Serial.begin(9600);
 	storageInit();
+
+	char configBuffer[128], ssid[128], password[128] = {'\0'};
 
 	if (readFile(CONFIG_FILE, configBuffer) > 0) {
 		if (!parseConfig(configBuffer, ssid, password)) {

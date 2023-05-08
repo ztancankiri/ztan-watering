@@ -5,6 +5,7 @@
 #include <ArduinoJson.h>
 #include <WebServer.h>
 
+#include "network_handler.h"
 #include "storage_handler.h"
 #include "utils.h"
 

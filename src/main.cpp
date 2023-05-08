@@ -4,15 +4,23 @@
 #include "utils.h"
 #include "webserver_handler.h"
 
+TaskHandle_t extraLoopHandle;
+
 WebServer server(80);
 char configBuffer[128], ssid[128], password[128] = {'\0'};
+
+void extraLoop(void* parameter) {
+	while (true) {
+		webServerProcess(&server);
+	}
+}
 
 void setup() {
 	Serial.begin(9600);
 	storageInit();
 
 	if (readFile(CONFIG_FILE, configBuffer) > 0) {
-		if (!parseConfig(configBuffer, "|", ssid, password)) {
+		if (!parseConfig(configBuffer, ssid, password)) {
 			Serial.println("Could not parse config!");
 
 			if (deleteFile(CONFIG_FILE)) {
@@ -25,6 +33,11 @@ void setup() {
 			ESP.restart();
 		}
 
+		Serial.print("SSID: ");
+		Serial.println(ssid);
+		Serial.print("Password: ");
+		Serial.println(password);
+
 		wifiClientInit(ssid, password);
 	} else {
 		Serial.println("Config Not Exist!");
@@ -33,8 +46,9 @@ void setup() {
 
 	mDNSInit("ztan-watering");
 	webServerInit(&server);
+
+	xTaskCreatePinnedToCore(extraLoop, "extraLoop", 10000, NULL, 0, &extraLoopHandle, 0);
 }
 
 void loop() {
-	webServerProcess(&server);
 }

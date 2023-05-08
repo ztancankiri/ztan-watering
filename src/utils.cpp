@@ -1,15 +1,15 @@
 #include "utils.h"
 
-bool parseConfig(char *config, const char *delimiter, char *ssid, char *password) {
-	char *token = strtok(config, delimiter);
-	if (token != NULL) {
-		strcpy(ssid, token);
-		token = strtok(NULL, delimiter);
-		if (token != NULL) {
-			strcpy(password, token);
-			return true;
-		}
+bool parseConfig(char *config, char *ssid, char *password) {
+	DynamicJsonDocument doc(128);
+	DeserializationError error = deserializeJson(doc, config);
+
+	if (error) {
+		return false;
 	}
 
-	return false;
+	strcpy(ssid, doc["ssid"].as<const char *>());
+	strcpy(password, doc["password"].as<const char *>());
+
+	return true;
 }

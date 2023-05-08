@@ -8,18 +8,35 @@ void webServerInit(WebServer* server) {
 	server->on("/configure", HTTP_POST, [server]() {
 		const char* body = server->arg("plain").c_str();
 
-		if (writeFile(CONFIG_FILE, body)) {
-			Serial.print("Config is received: ");
-			Serial.println(body);
-			Serial.println("Config is written.");
+		DynamicJsonDocument doc(128);
+		DeserializationError error = deserializeJson(doc, body);
 
-			server->send(200, "text/plain", "Config is written.");
+		if (error) {
+			Serial.println("Config parse error.");
+			server->send(400, "text/plain", "Config parse error.");
 		} else {
-			Serial.println("Config is NOT written.");
-		}
+			char ssid[128], password[128] = {'\0'};
 
-		delay(1000);
-		ESP.restart();
+			DynamicJsonDocument newDoc(128);
+			newDoc["ssid"] = doc["ssid"];
+			newDoc["password"] = doc["password"];
+
+			String output;
+			serializeJson(newDoc, output);
+
+			if (writeFile(CONFIG_FILE, output.c_str())) {
+				Serial.print("Config is received: ");
+				Serial.println(body);
+				Serial.println("Config is written.");
+
+				server->send(200, "text/plain", "Config is written.");
+			} else {
+				Serial.println("Config is NOT written.");
+			}
+
+			delay(1000);
+			ESP.restart();
+		}
 	});
 
 	server->on("/delete", HTTP_DELETE, [server]() {

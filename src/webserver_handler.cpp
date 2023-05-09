@@ -1,6 +1,6 @@
 #include "webserver_handler.h"
 
-void webServerInit(WebServer* server) {
+void webServerInit(WebServer* server, Sensor* sensor) {
 	server->on("/", HTTP_GET, [server]() {
 		server->send(200, "text/plain", "Hello from Ztan-Watering!");
 	});
@@ -59,6 +59,16 @@ void webServerInit(WebServer* server) {
 		} else {
 			server->send(200, "text/plain", "No Network!");
 		}
+	});
+
+	server->on("/sensor", HTTP_GET, [server, sensor]() {
+		char sensorData[128] = {'\0'};
+		sensor->read(sensorData);
+
+		Serial.print("Sensor Data: ");
+		Serial.println(sensorData);
+
+		server->send(200, "text/plain", sensorData);
 	});
 
 	server->onNotFound([server]() {

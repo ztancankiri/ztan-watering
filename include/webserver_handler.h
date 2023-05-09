@@ -6,10 +6,11 @@
 #include <WebServer.h>
 
 #include "network_handler.h"
+#include "sensor_handler.h"
 #include "storage_handler.h"
 #include "utils.h"
 
-void webServerInit(WebServer* server);
+void webServerInit(WebServer* server, Sensor* sensor);
 void webServerProcess(WebServer* server);
 
 #endif

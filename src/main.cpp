@@ -1,8 +1,11 @@
 #include <Arduino.h>
 
 #include "network_handler.h"
+#include "sensor_handler.h"
 #include "utils.h"
 #include "webserver_handler.h"
+
+Sensor* sensor;
 
 TaskHandle_t extraLoopHandle;
 WebServer server(80);
@@ -45,7 +48,9 @@ void setup() {
 	}
 
 	mDNSInit("ztan-watering");
-	webServerInit(&server);
+
+	sensor = new Sensor(26, 35);
+	webServerInit(&server, sensor);
 
 	xTaskCreatePinnedToCore(extraLoop, "extraLoop", 10000, NULL, 0, &extraLoopHandle, 0);
 }

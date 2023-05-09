@@ -1,11 +1,25 @@
-#include "webserver_handler.h"
+#include "WebServerEx.h"
 
-void webServerInit(WebServer* server, Sensor* sensor) {
-	server->on("/", HTTP_GET, [server]() {
+WebServerEx::WebServerEx(uint8_t port, Sensor* sensor) {
+	this->sensor = sensor;
+	server = new WebServer(port);
+	webServerConfigureEndpoints();
+	server->begin();
+	xTaskCreatePinnedToCore(loop, "WebServerExLoop", 10000, this, 0, &taskHandle, 0);
+	Serial.println("HTTP server started.");
+}
+
+WebServerEx::~WebServerEx() {
+	vTaskDelete(taskHandle);
+	delete server;
+}
+
+void WebServerEx::webServerConfigureEndpoints() {
+	server->on("/", HTTP_GET, [this]() {
 		server->send(200, "text/plain", "Hello from Ztan-Watering!");
 	});
 
-	server->on("/configure", HTTP_POST, [server]() {
+	server->on("/configure", HTTP_POST, [this]() {
 		const char* body = server->arg("plain").c_str();
 
 		DynamicJsonDocument doc(128);
@@ -39,7 +53,7 @@ void webServerInit(WebServer* server, Sensor* sensor) {
 		}
 	});
 
-	server->on("/delete", HTTP_DELETE, [server]() {
+	server->on("/delete", HTTP_DELETE, [this]() {
 		if (deleteFile(CONFIG_FILE)) {
 			Serial.println("Config is deleted.");
 			server->send(200, "text/plain", "Config is deleted.");
@@ -50,7 +64,7 @@ void webServerInit(WebServer* server, Sensor* sensor) {
 		}
 	});
 
-	server->on("/scan", HTTP_GET, [server]() {
+	server->on("/scan", HTTP_GET, [this]() {
 		char availableNetworks[2028] = {'\0'};
 		int networkCount = wifiScan(availableNetworks);
 
@@ -61,7 +75,7 @@ void webServerInit(WebServer* server, Sensor* sensor) {
 		}
 	});
 
-	server->on("/sensor", HTTP_GET, [server, sensor]() {
+	server->on("/sensor", HTTP_GET, [this]() {
 		char sensorData[128] = {'\0'};
 		sensor->read(sensorData);
 
@@ -71,7 +85,7 @@ void webServerInit(WebServer* server, Sensor* sensor) {
 		server->send(200, "text/plain", sensorData);
 	});
 
-	server->onNotFound([server]() {
+	server->onNotFound([this]() {
 		String message = "File Not Found\n\n";
 		message += "URI: ";
 		message += server->uri();
@@ -87,12 +101,11 @@ void webServerInit(WebServer* server, Sensor* sensor) {
 
 		server->send(404, "text/plain", message);
 	});
-
-	server->begin();
-	Serial.println("HTTP server started.");
 }
 
-void webServerProcess(WebServer* server) {
-	server->handleClient();
-	delay(2);
+void WebServerEx::loop(void* instance) {
+	while (true) {
+		static_cast<WebServerEx*>(instance)->server->handleClient();
+		delay(2);
+	}
 }

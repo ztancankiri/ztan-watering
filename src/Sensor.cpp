@@ -1,4 +1,4 @@
-#include "sensor_handler.h"
+#include "Sensor.h"
 
 Sensor::Sensor(uint8_t dhtPin, uint8_t moisturePin) {
 	this->dht = new DHT(dhtPin, DHT22);

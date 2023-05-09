@@ -1,20 +1,12 @@
 #include <Arduino.h>
 
+#include "Sensor.h"
+#include "WebServerEx.h"
 #include "network_handler.h"
-#include "sensor_handler.h"
 #include "utils.h"
-#include "webserver_handler.h"
 
+WebServerEx* webServerEx;
 Sensor* sensor;
-
-TaskHandle_t extraLoopHandle;
-WebServer server(80);
-
-void extraLoop(void* parameter) {
-	while (true) {
-		webServerProcess(&server);
-	}
-}
 
 void setup() {
 	Serial.begin(9600);
@@ -50,9 +42,7 @@ void setup() {
 	mDNSInit("ztan-watering");
 
 	sensor = new Sensor(26, 35);
-	webServerInit(&server, sensor);
-
-	xTaskCreatePinnedToCore(extraLoop, "extraLoop", 10000, NULL, 0, &extraLoopHandle, 0);
+	webServerEx = new WebServerEx(80, sensor);
 }
 
 void loop() {

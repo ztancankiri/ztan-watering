@@ -1,14 +1,14 @@
-#ifndef ENDPOINT_HANDLER_H
-#define ENDPOINT_HANDLER_H
+#ifndef WEBSERVEREX_H
+#define WEBSERVEREX_H
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <WebServer.h>
 
+#include "Configuration.h"
 #include "Sensor.h"
+#include "Storage.h"
 #include "network_handler.h"
-#include "storage_handler.h"
-#include "utils.h"
 
 class WebServerEx {
    private:

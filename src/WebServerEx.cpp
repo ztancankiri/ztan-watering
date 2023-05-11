@@ -15,6 +15,10 @@ WebServerEx::~WebServerEx() {
 }
 
 void WebServerEx::webServerConfigureEndpoints() {
+	server->onNotFound([this]() {
+		server->send(404, "text/plain", "Not found!");
+	});
+
 	server->on("/", HTTP_GET, [this]() {
 		server->send(200, "text/plain", "Hello from Ztan-Watering!");
 	});
@@ -22,39 +26,32 @@ void WebServerEx::webServerConfigureEndpoints() {
 	server->on("/configure", HTTP_POST, [this]() {
 		const char* body = server->arg("plain").c_str();
 
-		DynamicJsonDocument doc(128);
+		StaticJsonDocument<2048> doc;
 		DeserializationError error = deserializeJson(doc, body);
 
 		if (error) {
 			Serial.println("Config parse error.");
 			server->send(400, "text/plain", "Config parse error.");
 		} else {
-			char ssid[128], password[128] = {'\0'};
+			Configuration::setWiFiSSID(doc["ssid"].as<const char*>());
+			Configuration::setWiFiPassword(doc["password"].as<const char*>());
+			bool isSaved = Configuration::save();
+			doc.clear();
 
-			DynamicJsonDocument newDoc(128);
-			newDoc["ssid"] = doc["ssid"];
-			newDoc["password"] = doc["password"];
-
-			String output;
-			serializeJson(newDoc, output);
-
-			if (writeFile(CONFIG_FILE, output.c_str())) {
-				Serial.print("Config is received: ");
-				Serial.println(body);
-				Serial.println("Config is written.");
-
+			if (isSaved) {
 				server->send(200, "text/plain", "Config is written.");
+				delay(1000);
+				ESP.restart();
 			} else {
 				Serial.println("Config is NOT written.");
 			}
-
-			delay(1000);
-			ESP.restart();
 		}
 	});
 
 	server->on("/delete", HTTP_DELETE, [this]() {
-		if (deleteFile(CONFIG_FILE)) {
+		bool isRemoved = Configuration::remove();
+
+		if (isRemoved) {
 			Serial.println("Config is deleted.");
 			server->send(200, "text/plain", "Config is deleted.");
 			delay(1000);
@@ -83,23 +80,6 @@ void WebServerEx::webServerConfigureEndpoints() {
 		Serial.println(sensorData);
 
 		server->send(200, "text/plain", sensorData);
-	});
-
-	server->onNotFound([this]() {
-		String message = "File Not Found\n\n";
-		message += "URI: ";
-		message += server->uri();
-		message += "\nMethod: ";
-		message += (server->method() == HTTP_GET) ? "GET" : "POST";
-		message += "\nArguments: ";
-		message += server->args();
-		message += "\n";
-
-		for (uint8_t i = 0; i < server->args(); i++) {
-			message += " " + server->argName(i) + ": " + server->arg(i) + "\n";
-		}
-
-		server->send(404, "text/plain", message);
 	});
 }
 

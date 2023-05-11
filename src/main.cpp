@@ -1,48 +1,38 @@
 #include <Arduino.h>
 
+#include "Configuration.h"
 #include "Sensor.h"
 #include "WebServerEx.h"
 #include "network_handler.h"
-#include "utils.h"
+
+#define CONFIG_FILE "/config.txt"
+#define AP_SSID "Ztan-Watering"
 
 WebServerEx* webServerEx;
 Sensor* sensor;
 
 void setup() {
 	Serial.begin(9600);
-	storageInit();
+	Storage::mount();
 
-	char configBuffer[128], ssid[128], password[128] = {'\0'};
+	bool isLoaded = Configuration::load(CONFIG_FILE);
 
-	if (readFile(CONFIG_FILE, configBuffer) > 0) {
-		if (!parseConfig(configBuffer, ssid, password)) {
-			Serial.println("Could not parse config!");
-
-			if (deleteFile(CONFIG_FILE)) {
-				Serial.println("Config is deleted.");
-			} else {
-				Serial.println("Config is NOT deleted.");
-			}
-
-			delay(1000);
-			ESP.restart();
-		}
-
-		Serial.print("SSID: ");
-		Serial.println(ssid);
-		Serial.print("Password: ");
-		Serial.println(password);
-
+	if (isLoaded) {
+		char ssid[128], password[128];
+		Configuration::getWiFiSSID(ssid);
+		Configuration::getWiFiPassword(password);
+		Serial.printf("SSID: %s\nPassword: %s\n", ssid, password);
 		wifiClientInit(ssid, password);
 	} else {
-		Serial.println("Config Not Exist!");
+		Serial.println("Error on loading the configuration from storage.");
+		Configuration::remove();
+		Serial.println("Switching to AP mode.");
 		wifiAPInit(AP_SSID);
 	}
 
-	mDNSInit("ztan-watering");
-
 	sensor = new Sensor(26, 35);
 	webServerEx = new WebServerEx(80, sensor);
+	mDNSInit("ztan-watering");
 }
 
 void loop() {

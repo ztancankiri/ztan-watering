@@ -63,7 +63,7 @@ void WebServerEx::webServerConfigureEndpoints() {
 
 	server->on("/scan", HTTP_GET, [this]() {
 		char availableNetworks[2028] = {'\0'};
-		int networkCount = wifiScan(availableNetworks);
+		int networkCount = Network::scan(availableNetworks);
 
 		if (networkCount > 0) {
 			server->send(200, "text/plain", availableNetworks);

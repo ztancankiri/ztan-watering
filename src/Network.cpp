@@ -1,6 +1,8 @@
-#include "network_handler.h"
+#include "network.h"
 
-void wifiClientInit(const char* ssid, const char* password) {
+StaticJsonDocument<2048> Network::networks;
+
+void Network::clientInit(const char* ssid, const char* password) {
 	WiFi.mode(WIFI_STA);
 	WiFi.begin(ssid, password);
 
@@ -16,19 +18,19 @@ void wifiClientInit(const char* ssid, const char* password) {
 	Serial.println(WiFi.localIP());
 }
 
-void wifiAPInit(const char* ssid) {
+void Network::APInit(const char* ssid) {
 	WiFi.softAP(ssid);
 	Serial.print("AP IP address: ");
 	Serial.println(WiFi.softAPIP());
 }
 
-int wifiScan(char* availableNetworks) {
+int Network::scan(char* availableNetworks) {
 	Serial.println("WiFi scan is started.");
 	int n = WiFi.scanNetworks(false, true);
 	Serial.println("WiFi scan is completed.");
 
-	DynamicJsonDocument doc(2048);
-	JsonArray networks = doc.to<JsonArray>();
+	networks.clear();
+	JsonArray networkArray = networks.to<JsonArray>();
 
 	if (n == 0) {
 		Serial.println("No networks found.");
@@ -38,7 +40,7 @@ int wifiScan(char* availableNetworks) {
 		for (int i = 0; i < n; ++i) {
 			wifi_auth_mode_t security = WiFi.encryptionType(i);
 
-			JsonObject network = networks.createNestedObject();
+			JsonObject network = networkArray.createNestedObject();
 			network["ssid"] = WiFi.SSID(i);
 			network["rssi"] = WiFi.RSSI(i);
 			network["bssid"] = WiFi.BSSIDstr(i);
@@ -84,13 +86,13 @@ int wifiScan(char* availableNetworks) {
 	}
 
 	String output;
-	serializeJson(doc, output);
+	serializeJson(networks, output);
 	strcpy(availableNetworks, output.c_str());
 
 	return n;
 }
 
-void mDNSInit(const char* hostname) {
+void Network::mDNSInit(const char* hostname) {
 	if (MDNS.begin(hostname)) {
 		Serial.println("MDNS responder started.");
 	}

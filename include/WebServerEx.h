@@ -6,9 +6,9 @@
 #include <WebServer.h>
 
 #include "Configuration.h"
+#include "Network.h"
 #include "Sensor.h"
 #include "Storage.h"
-#include "network_handler.h"
 
 class WebServerEx {
    private:

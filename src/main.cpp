@@ -1,6 +1,7 @@
 #include <Arduino.h>
 
 #include "Configuration.h"
+#include "Motor.h"
 #include "Network.h"
 #include "Sensor.h"
 #include "WebServerEx.h"
@@ -12,6 +13,9 @@
 #define WEBSERVER_PORT 80
 #define DHT_PIN 26
 #define MOISTURE_SENSOR_PIN 35
+#define MOTOR_PIN 34
+
+Motor* motor;
 
 void setup() {
 	Serial.begin(9600);
@@ -32,9 +36,12 @@ void setup() {
 		Network::APInit(AP_SSID);
 	}
 
+	motor = new Motor(MOTOR_PIN);
+
 	new WebServerEx(WEBSERVER_PORT, new Sensor(DHT_PIN, MOISTURE_SENSOR_PIN));
 	Network::mDNSInit(HOSTNAME);
 }
 
 void loop() {
+	motor->process();
 }

@@ -1,5 +1,5 @@
-#ifndef CONFIGURATION_LOADER_H
-#define CONFIGURATION_LOADER_H
+#ifndef CONFIGURATION_H
+#define CONFIGURATION_H
 
 #include <Arduino.h>
 #include <ArduinoJson.h>

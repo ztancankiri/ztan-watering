@@ -24,7 +24,7 @@ float Sensor::readMoisture() {
 }
 
 void Sensor::read(char* data) {
-	DynamicJsonDocument doc(128);
+	StaticJsonDocument<128> doc;
 
 	doc["temperature"] = readTemperature();
 	doc["humidity"] = readHumidity();

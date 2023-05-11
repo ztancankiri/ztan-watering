@@ -21,8 +21,8 @@ void Motor::run(uint8_t seconds) {
 
 void Motor::process() {
 	if (this->isRunning && millis() >= endTime) {
+		this->isRunning = false;
 		this->endTime = 0;
 		digitalWrite(this->motorPin, LOW);
-		this->isRunning = false;
 	}
 }

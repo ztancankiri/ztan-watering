@@ -13,17 +13,16 @@
 #define WEBSERVER_PORT 80
 #define DHT_PIN 26
 #define MOISTURE_SENSOR_PIN 35
-#define MOTOR_PIN 34
+#define MOTOR_PIN 13
 
-Motor* motor;
+Sensor* sensor = NULL;
+Motor* motor = NULL;
 
 void setup() {
 	Serial.begin(9600);
 	Storage::mount();
 
-	bool isLoaded = Configuration::load(CONFIG_FILE);
-
-	if (isLoaded) {
+	if (Configuration::load(CONFIG_FILE)) {
 		char ssid[128], password[128];
 		Configuration::getWiFiSSID(ssid);
 		Configuration::getWiFiPassword(password);
@@ -36,9 +35,10 @@ void setup() {
 		Network::APInit(AP_SSID);
 	}
 
+	sensor = new Sensor(DHT_PIN, MOISTURE_SENSOR_PIN);
 	motor = new Motor(MOTOR_PIN);
 
-	new WebServerEx(WEBSERVER_PORT, new Sensor(DHT_PIN, MOISTURE_SENSOR_PIN));
+	new WebServerEx(WEBSERVER_PORT, sensor, motor);
 	Network::mDNSInit(HOSTNAME);
 }
 

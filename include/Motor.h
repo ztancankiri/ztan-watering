@@ -6,7 +6,7 @@
 class Motor {
    private:
 	uint8_t motorPin;
-	uint8_t endTime;
+	unsigned long endTime;
 	bool isRunning;
 
    public:

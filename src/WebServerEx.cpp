@@ -1,7 +1,8 @@
 #include "WebServerEx.h"
 
-WebServerEx::WebServerEx(uint8_t port, Sensor* sensor) {
+WebServerEx::WebServerEx(uint8_t port, Sensor* sensor, Motor* motor) {
 	this->sensor = sensor;
+	this->motor = motor;
 	server = new WebServer(port);
 	webServerConfigureEndpoints();
 	server->begin();
@@ -80,6 +81,23 @@ void WebServerEx::webServerConfigureEndpoints() {
 		Serial.println(sensorData);
 
 		server->send(200, "text/plain", sensorData);
+	});
+
+	server->on("/motor", HTTP_POST, [this]() {
+		const char* body = server->arg("plain").c_str();
+
+		StaticJsonDocument<128> doc;
+		DeserializationError error = deserializeJson(doc, body);
+
+		if (error) {
+			Serial.println("Motor input error.");
+			server->send(400, "text/plain", "Motor input error.");
+		} else {
+			uint8_t duration = doc["duration"];
+			motor->run(duration);
+			doc.clear();
+			server->send(200, "text/plain", "Motor started to run.");
+		}
 	});
 }
 
